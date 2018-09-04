@@ -110,11 +110,12 @@ int = { '0'..'9' ~ ('0'..'9' | "_")* }
 
 In the example above, the range defining a digit (`'0'..'9'`) is repeated and
 can be turned into a rule. Since we do not want it to generate tokens or be
-reported in errors, we will make it silent (`_`).
+reported in errors, we will make it silent (`_`). Additionally, we want do not
+want any implicit whitespace in the literal so we make it atomic (`@`).
 
 ```
 digit = _{ '0'..'9' }
-int   =  { digit ~ (digit | "_")* }
+int   =  @{ digit ~ (digit | "_")* }
 ```
 
 Testing a few cases like `"0"`, `"01"`, `"0___"`, `"1_000_000"` should suffice.
@@ -131,7 +132,7 @@ two different shapes:
 By abstracting the definition of the exponent, the grammar will look like this:
 
 ```
-float = {
+float = @{
     int ~ "." ~ int? ~ exp? |
     int ~ exp
 }
@@ -199,7 +200,7 @@ of raw string parts (containing no escapes) and actual escapes, all enclosed
 within a pair of quotes:
 
 ```
-string = { "\"" ~ (raw_string | escape)* ~ "\"" }
+string = @{ "\"" ~ (raw_string | escape)* ~ "\"" }
 ```
 
 Raw strings can basically be any character apart from `'\'`, since that means
@@ -241,9 +242,9 @@ We now have everything we need to define escapes:
 
 ```
 predefined = { "n" | "r" | "t" | "\\" | "0" | "\"" | "'" }
-byte       = { "x" ~ hex{2} }
-unicode    = { "u" ~ "{" ~ unicode_hex ~ "}" }
-escape     = { "\\" ~ (predefined | byte | unicode) }
+byte       = @{ "x" ~ hex{2} }
+unicode    = @{ "u" ~ "{" ~ unicode_hex ~ "}" }
+escape     = @{ "\\" ~ (predefined | byte | unicode) }
 ```
 
 For the sake of compactness, we can write a single test that encompasses
@@ -291,7 +292,7 @@ Characters are very similar to strings, with the obvious exception that may only
 store one character:
 
 ```
-chr = { "'" ~ (escape | any) ~ "'" }
+chr = @{ "'" ~ (escape | any) ~ "'" }
 ```
 
 Tests should cover at least the usual and the escape cases, e.g. `"'a'"`,
@@ -325,7 +326,7 @@ This can be implemented by having a choice clause between two cases:
 
 ```
 ident_char = _{ 'a'..'z' | 'A'..'Z' | '0'..'9' | "_" }
-ident      =  {
+ident      =  @{
     ('a'..'z' | 'A'..'Z') ~ ident_char* |
     "_" ~ ident_char+
 }
